@@ -1,0 +1,65 @@
+div.container {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+button.loginButton,
+button.logoutButton {
+  position: relative;
+  padding: 1rem 2rem;
+  margin-bottom: 4rem;
+
+  background-color: var(--clr-purple-200);
+  border-radius: 2rem;
+  border: none;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+
+  overflow: hidden;
+  z-index: 2;
+  transition: transform 0.3s ease;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+button.loginButton:hover,
+button.logoutButton:hover {
+  transform: scale(1.1);
+}
+
+button.loginButton::before,
+button.logoutButton::before {
+  position: absolute;
+  content: "";
+  height: 150px;
+  width: 300px;
+  top: 100%;
+  left: 100%;
+  background: var(--gr-purple-diagonal);
+  background-size: 200% 100%;
+  border-radius: 50%;
+  z-index: -1;
+  transition: all 0.5s;
+}
+
+button.loginButton:hover::before,
+button.logoutButton:hover::before {
+  top: -30px;
+  left: -30px;
+  background-position: 70% 70%;
+}
+
+img.spotifyIcon,
+img.exitIcon {
+  margin-right: 1rem;
+}
+
+p.feedbackMessage {
+  width: 50%;
+  color: var(--clr-white);
+  text-align: center;
+}

@@ -1,0 +1,5 @@
+p.introText {
+  margin-bottom: 4rem;
+  text-align: center;
+  font-size: var(--fs-vlg);
+}
