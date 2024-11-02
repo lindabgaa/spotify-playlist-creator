@@ -1,0 +1,50 @@
+:root {
+  font-size: 62.5%;
+
+  --clr-white: #ffffff;
+  --clr-black: #000000;
+  --clr-purple-200: #4f46e5;
+
+  --gr-purple-diagonal: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+  --gr-purple-vertical: linear-gradient(180deg, #d8b4fe 0%, #c4b5fd 25%, #818cf8 50%, #663dff 75%, #4f46e5 100%);
+
+  --fs-vlg: 3.2rem;
+  --fs-lg: 2.4rem;
+  --fs-md: 1.8rem;
+  --fs-base: 1.6rem;
+  --fs-sm: 1.4rem;
+
+  --ff-poppins: "Poppins", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100vh;
+}
+
+body,
+input,
+select,
+button,
+a {
+  color: var(--clr-white);
+  font-size: var(--fs-base);
+  font-family: var(--ff-poppins);
+}
+
+body {
+  background-color: #663dff;
+  background: var(--gr-purple-vertical);
+}
+
+li {
+  list-style: none;
+}

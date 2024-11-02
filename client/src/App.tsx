@@ -1,5 +1,12 @@
+import "./App.css";
+import SpotifyAuth from "./components/SpotifyAuth/SpotifyAuth";
+
 function App() {
-  return <div></div>;
+  return (
+    <main>
+      <SpotifyAuth />
+    </main>
+  );
 }
 
 export default App;
