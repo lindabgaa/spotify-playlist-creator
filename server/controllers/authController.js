@@ -1,90 +1,128 @@
-const querystring = require("querystring");
 const axios = require("axios");
+const querystring = require("querystring");
+const CONFIG = require("./../config");
 
-const env = process.env.NODE_ENV || "development";
+// ----  /auth/check : check if user is authenticated
+const checkAuth = (req, res) => {
+  if (req.cookies.access_token && req.cookies.refresh_token) {
+    return res.status(200).json({
+      authenticated: true,
+      message: "User is authenticated",
+    });
+  }
 
-const SPOTIFY_REDIRECT_URI = `${
-  env === "production" ? process.env.PROD_SERVER_URL : process.env.DEV_SERVER_URL
-}/api/auth/callback`;
-
-const CLIENT_REDIRECT_URI = env === "production" ? process.env.PROD_CLIENT_URL : process.env.DEV_CLIENT_URL;
+  return res.status(401).json({
+    authenticated: false,
+    message: "User is not authenticated",
+  });
+};
 
 // ----  /auth/login : redirects to Spotify Login Page
-const login = async (req, res) => {
-  const scopes = process.env.SPOTIFY_SCOPES.split(",")
-    .map((scope) => scope.trim())
-    .join(" ");
+const redirectToSpotifyAuthPage = (req, res) => {
+  const scopes = Object.values(CONFIG.SPOTIFY.SCOPES).flat().join(" ");
 
-  const authUrl = `https://accounts.spotify.com/authorize?${querystring.stringify({
+  const authUrl = `${CONFIG.SPOTIFY.AUTH_URL}?${querystring.stringify({
     response_type: "code",
-    client_id: process.env.SPOTIFY_CLIENT_ID,
+    client_id: CONFIG.SPOTIFY.CLIENT_ID,
     scope: scopes,
-    redirect_uri: SPOTIFY_REDIRECT_URI,
+    redirect_uri: CONFIG.SPOTIFY.REDIRECT_URI,
   })}`;
 
-  console.log("Redirecting to Spotify login page..");
+  console.log("Redirecting to Spotify Auth Page...");
+
   res.redirect(authUrl);
 };
 
 // ---- /auth/callback : retrieves access token from Spotify and redirects to client
-const callback = async (req, res) => {
+const exchangeCodeForTokens = async (req, res) => {
   const { code } = req.query;
 
   try {
+    console.log("Exchanging code for token...");
+
     const response = await axios.post(
-      "https://accounts.spotify.com/api/token",
+      `${CONFIG.SPOTIFY.TOKEN_URL}`,
       querystring.stringify({
         grant_type: "authorization_code",
         code: code,
-        redirect_uri: SPOTIFY_REDIRECT_URI,
-        client_id: process.env.SPOTIFY_CLIENT_ID,
-        client_secret: process.env.SPOTIFY_CLIENT_SECRET,
+        redirect_uri: CONFIG.SPOTIFY.REDIRECT_URI,
+        client_id: CONFIG.SPOTIFY.CLIENT_ID,
+        client_secret: CONFIG.SPOTIFY.CLIENT_SECRET,
       }),
       {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
           Authorization: `Basic ${Buffer.from(
-            `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
+            `${CONFIG.SPOTIFY.CLIENT_ID}:${CONFIG.SPOTIFY.CLIENT_SECRET}`
           ).toString("base64")}`,
         },
       }
     );
 
-    const accessToken = response.data.access_token;
+    const { access_token, refresh_token } = response.data;
 
-    if (!accessToken) {
-      throw new Error("Access token not found");
+    if (!access_token || !refresh_token) {
+      throw new Error("Access token or refresh token missing");
     }
 
     console.log("Authentication successful! Redirecting to client..");
 
-    res.cookie("access_token", accessToken, {
-      httpOnly: true, // prevent XSS attacks and more
-      secure: env === "production" ? true : false, // only send cookie over HTTPS in production
-      sameSite: "strict", // prevent CSRF attacks and more
+    res.cookie("access_token", access_token, {
+      httpOnly: true,
+      secure: CONFIG.ENV === "production" ? true : false,
+      sameSite: "strict",
     });
 
-    res.redirect(CLIENT_REDIRECT_URI);
+    res.cookie("refresh_token", refresh_token, {
+      httpOnly: true,
+      secure: CONFIG.ENV === "production" ? true : false,
+      sameSite: "strict",
+    });
+
+    res.redirect(`${CONFIG.CLIENT_REDIRECT_URI}`);
   } catch (error) {
-    console.error(`Authentication failed: ${error.message}`);
+    console.error("Authentication to Spotify failed!");
 
     if (error.response) {
-      return res.status(error.response.status).send({
+      const { status, data } = error.response;
+
+      console.error(
+        `Response from Spotify: 
+        Status: ${status}
+        Error Type: ${data.error || "Unknown error type"}
+        Error Description: ${data.error_description || "No error description provided."}
+      `
+      );
+      return res.status(error.response.status).json({
         error: {
-          status: error.response.status,
+          status: status,
           message: "Spotify Authentication failed",
-          detail: error.response.data.error_description,
+          type: data.error || "Unknown error type",
+          detail: data.error_description || "No error description provided.",
         },
       });
-    } else
-      return res.status(500).send({
+    }
+
+    if (error.request) {
+      console.error("Network or API error:", error.request);
+      return res.status(503).json({
         error: {
-          status: 500,
+          status: 503,
           message: "Spotify Authentication failed",
-          detail: "Internal server error",
+          detail: "Network error or issue connecting to Spotify API. Please try again later.",
         },
       });
+    }
+
+    console.error(`Internal server error: ${error.stack || error}`);
+    return res.status(500).json({
+      error: {
+        status: 500,
+        message: "Spotify Authentication failed",
+        detail: error.message || "An unexpected error occurred.",
+      },
+    });
   }
 };
 
-module.exports = { login, callback };
+module.exports = { checkAuth, redirectToSpotifyAuthPage, exchangeCodeForTokens };

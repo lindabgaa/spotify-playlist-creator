@@ -1,45 +1,49 @@
 require("dotenv").config();
-
+require("colors");
 const express = require("express");
+const app = express();
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const CONFIG = require("./config");
 
 // ---- Routes
 const authRoutes = require("./routes/authRoutes");
 
-const app = express();
 const PORT = process.env.PORT || 3000;
 const corsOptions = {
   origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(",") : [],
+  credentials: true,
 };
+
+console.log(`> ${CONFIG.ENV} mode`.yellow);
 
 // ---- Check for required environment variables
 (() => {
-  const missingEnv = [];
+  const requiredEnv = {
+    spotify: ["SPOTIFY_CLIENT_ID", "SPOTIFY_CLIENT_SECRET"],
+    server: ["DEVELOPMENT_SERVER_URL", "PRODUCTION_SERVER_URL", "TEST_SERVER_URL"],
+    client: ["DEVELOPMENT_CLIENT_URL", "PRODUCTION_CLIENT_URL", "TEST_CLIENT_URL"],
+  };
 
-  if (!process.env.SPOTIFY_CLIENT_ID) missingEnv.push("SPOTIFY_CLIENT_ID");
-  if (!process.env.SPOTIFY_CLIENT_SECRET) missingEnv.push("SPOTIFY_CLIENT_SECRET");
-  if (!process.env.SPOTIFY_SCOPES) missingEnv.push("SPOTIFY_SCOPES");
-  if (!process.env.DEV_SERVER_URL) missingEnv.push("DEV_SERVER_URL");
-  if (!process.env.PROD_SERVER_URL) missingEnv.push("PROD_SERVER_URL");
-  if (!process.env.DEV_CLIENT_URL) missingEnv.push("DEV_CLIENT_URL");
-  if (!process.env.PROD_CLIENT_URL) missingEnv.push("PROD_CLIENT_URL");
+  const missingEnv = Object.entries(requiredEnv).flatMap(([category, vars]) =>
+    vars
+      .filter((envVar) => !process.env[envVar])
+      .map((envVar) => `${category.toUpperCase().grey}: ${envVar.magenta}`)
+  );
 
   if (missingEnv.length > 0) {
     console.error(
-      "Missing required environment variables: ",
-      missingEnv.join(", "),
-      "\nPlease refer to the README.md file for instructions on setting up the project."
+      "Missing required environment variables: \n",
+      missingEnv.join("\n "),
+      "\nPlease refer to the README.md file for instructions on setting up the project.".red
     );
     process.exit(1);
   }
-
-  console.log("All set!");
 })();
 
 // ---- Middlewares
 app.use(cors(corsOptions));
-app.use(cookieParser());
+app.use(cookieParser()); // !!! //
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 
@@ -50,5 +54,5 @@ app.get("/", (req, res) => {
 
 // ---- Run server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

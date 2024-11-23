@@ -1,10 +1,14 @@
 const express = require("express");
-
-const authController = require("../controllers/authController");
+const {
+  redirectToSpotifyAuthPage,
+  exchangeCodeForTokens,
+  checkAuth,
+} = require("../controllers/authController");
 
 const router = express.Router();
 
-router.get("/login", authController.login);
-router.get("/callback", authController.callback);
+router.get("/check", checkAuth);
+router.get("/login", redirectToSpotifyAuthPage);
+router.get("/callback", exchangeCodeForTokens);
 
 module.exports = router;

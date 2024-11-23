@@ -6,7 +6,14 @@
   --clr-purple-200: #4f46e5;
 
   --gr-purple-diagonal: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
-  --gr-purple-vertical: linear-gradient(180deg, #d8b4fe 0%, #c4b5fd 25%, #818cf8 50%, #663dff 75%, #4f46e5 100%);
+  --gr-purple-vertical: linear-gradient(
+    180deg,
+    #d8b4fe 0%,
+    #c4b5fd 25%,
+    #818cf8 50%,
+    #663dff 75%,
+    #4f46e5 100%
+  );
 
   --fs-vlg: 3.2rem;
   --fs-lg: 2.4rem;
